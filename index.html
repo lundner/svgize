@@ -6,9 +6,11 @@
 	</head>
 	<body>
 		<svg id="svgized" xmlns="http://www.w3.org/2000/svg"></svg>
+		<svg id="svgized_2" xmlns="http://www.w3.org/2000/svg"></svg>
 		<canvas id="svgized_canvas"></canvas>
 		<script>
-			svgize('troll.jpg', 'svgized_canvas', 'svgized', 2);
+			svgize('troll.jpg', 'svgized_canvas', 'svgized', 2).gradient();
+			svgize('troll.jpg', 'svgized_canvas', 'svgized_2', 2).pixelize();
 		</script>
 	</body>
 </html>

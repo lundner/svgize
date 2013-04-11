@@ -1,45 +1,99 @@
 window.svgize ?= (src, canvasId, svgId, scale) ->
 
-	# create a new image object + get svg and canvas dom element
-	img = new Image()
-	svg = document.getElementById svgId
-	context = document.getElementById(canvasId).getContext '2d'
+	setSVGAttributes = (elem, attributes, ns) ->
+		ns ?= null
+		for k,v of attributes
+			elem.setAttributeNS ns, k, v
 
-	# the image was successfully loaded
-	img.onload = () ->
+	@pixelize = () ->
+		# create a new image object + get svg and canvas dom element
+		img = new Image()
+		svg = document.getElementById svgId
+		context = document.getElementById(canvasId).getContext '2d'
 
-		# set the width and height to the given imagesize times the scale
-		svg.setAttribute 'width', img.width*scale
-		svg.setAttribute 'height', img.height*scale
+		# the image was successfully loaded
+		img.onload = () ->
 
-		# get the canvas context to draw the image 
-		context.drawImage img, 0, 0
-		data = context.getImageData(0, 0 , img.width, img.height).data
+			# set the width and height to the given imagesize times the scale
+			svg.setAttribute 'width', img.width*scale
+			svg.setAttribute 'height', img.height*scale
 
-		# iterate over the pixel 
-		# a pixel is described by 4 array slots
-		line = -1
-		row = 0
-		for v,i in data by 4
-			row+=1
-			
-			# we are reaching the end of the line 
-			# -> reset the row and inc the line 
-			if (i/4)%img.width == 0
-				line += 1
-				row = 0
+			# get the canvas context to draw the image 
+			context.drawImage img, 0, 0
+			data = context.getImageData(0, 0 , img.width, img.height).data
 
-			# format the color 
-			color = "rgba(#{data[i+0]},#{data[i+1]},#{data[i+2]},#{data[i+3]})"
-			
-			# create the svg rectangle and append it 
-			pixel = document.createElementNS 'http://www.w3.org/2000/svg', 'rect'
-			pixel.setAttributeNS null, 'x', row*scale
-			pixel.setAttributeNS null, 'y', line*scale
-			pixel.setAttributeNS null, 'width', scale
-			pixel.setAttributeNS null, 'height', scale
-			pixel.setAttributeNS null, 'fill', color
-			svg.appendChild pixel
+			# iterate over the pixel 
+			# a pixel is described by 4 array slots
+			line = -1
+			row = 0
+			for v,i in data by 4
+				row+=1
+				
+				# we are reaching the end of the line 
+				# -> reset the row and inc the line 
+				if (i/4)%img.width == 0
+					line += 1
+					row = 0
 
-	img.src = src
-	return
+				# format the color 
+				color = "rgba(#{data[i+0]},#{data[i+1]},#{data[i+2]},#{data[i+3]})"
+				
+				# create the svg rectangle and append it 
+				pixel = document.createElementNS 'http://www.w3.org/2000/svg', 'rect'
+				setSVGAttributes pixel, 
+					x: row * scale
+					y: line * scale
+					width: scale
+					height: scale
+					fill: color
+				svg.appendChild pixel
+		img.src = src
+
+	@gradient = () ->
+		img = new Image()
+		svg = document.getElementById svgId
+		defs = document.createElementNS 'http://www.w3.org/2000/svg', 'defs'
+		svg.appendChild defs
+		context = document.getElementById(canvasId).getContext '2d'
+
+		img.onload = () ->
+			svg.setAttribute 'width', img.width * scale
+			svg.setAttribute 'height', img.height * scale
+
+			context.drawImage img, 0, 0
+			data = context.getImageData(0, 0 , img.width, img.height).data
+
+			line = -1
+			row = 0
+			for v,i in data by 4 * scale
+				row+= 1 * scale
+
+				if (i/4)%img.width == 0
+					line += 1 * scale
+					row = 0
+					ggrad = document.createElementNS 'http://www.w3.org/2000/svg', 'linearGradient'
+					setSVGAttributes ggrad,
+						id: "gradientLine_#{line}"
+						spreadMethod: 'pad'
+					defs.appendChild ggrad
+
+					grect = document.createElementNS 'http://www.w3.org/2000/svg', 'rect'
+					setSVGAttributes grect,
+						x: 0
+						y: line
+						width: img.width * scale
+						height: scale
+						fill: "url(#gradientLine_#{line})"
+					svg.appendChild grect
+
+				color = "rgba(#{data[i+0]},#{data[i+1]},#{data[i+2]},#{data[i+3]})"
+
+				gstop = document.createElementNS 'http://www.w3.org/2000/svg', 'stop'
+				setSVGAttributes gstop, 
+					offset: "#{row*100/img.width}%"
+					'stop-color': color
+				ggrad.appendChild gstop
+		img.src = src
+
+
+	return @
