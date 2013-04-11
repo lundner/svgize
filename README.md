@@ -10,3 +10,5 @@ all you need to do is to serve the files with a server. On Mac you can simply st
 > python -m SimpleHTTPServer
 
 in the terminal. Now you can access your files over localhost:8000 on your browser.
+
+A demo can be found [here](http://lundner.github.io/svgize/).
